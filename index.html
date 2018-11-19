@@ -1,0 +1,396 @@
+<!-- Stolen and modified from steve-taylor: https://gist.github.com/steve-taylor/40f54b400785258b80d4792a1b540501 -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Color Picker Pallette | Brandon P Martin</title>
+
+  <link rel="apple-touch-icon" sizes="57x57" href="favicon/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="favicon/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="favicon/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="favicon/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="favicon/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="favicon/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="favicon/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="favicon/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+  <link rel="manifest" href="favicon/manifest.json">
+  <meta name="msapplication-TileColor" content="#000">
+  <meta name="msapplication-TileImage" content="favicon/ms-icon-144x144.png">
+  <meta name="theme-color" content="#000">
+
+  <style>
+    ::selection {
+      background: black;
+      color: white;
+    }
+
+    ::-moz-selection {
+      background: black;
+      color: white;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      font-family: monospace;
+      background: #fafafa;
+      color: #121212;
+      padding: 0;
+      margin: 0;
+    }
+
+    input[type='color'] {
+      width: 50px;
+    }
+
+    button {
+      font-family: monospace;
+      background: #efefef;
+      border: 1px solid #444;
+      padding: 5px 10px;
+    }
+
+    button:hover {
+      background: #444;
+      color: #efefef;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      grid-template-rows: repeat(6, calc(100vh / 6));
+      grid-gap: 0px;
+    }
+
+    .color-controls {
+      margin: 0 auto;
+      width: 100%;
+      max-width: 956px;
+    }
+
+    .color-controls>div {
+      display: grid;
+    }
+
+    @media(min-width: 415px) {
+      .color-controls>div {
+        grid-template-columns: repeat(3, 1fr);
+        grid-column-gap: 14px;
+        position: absolute;
+        left: calc(50vw - 200px);
+        right: calc(50vw - 200px);
+        background: #fafafa;
+        padding: 0 15px;
+      }
+
+      .color-controls>div:first-child {
+        top: 5vh;
+      }
+
+      .color-controls>div:nth-child(2) {
+        position: absolute;
+        top: 22vh;
+      }
+
+      .color-controls>div:nth-child(3) {
+        position: absolute;
+        top: 39vh;
+      }
+
+      .color-controls>div:nth-child(4) {
+        position: absolute;
+        top: 55vh;
+      }
+
+      .color-controls>div:nth-child(5) {
+        position: absolute;
+        top: 72vh;
+      }
+
+      .color-controls>div:last-child {
+        position: absolute;
+        top: 88vh;
+      }
+
+      .buttons-wrap {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+      }
+    }
+
+    .color-controls>div>label {
+      display: grid;
+      grid-column-gap: 14px;
+      padding: 14px 0;
+    }
+
+    .color-controls input {
+      width: 100%;
+    }
+
+    .about-area,
+    .css-area {
+      display: none;
+      padding: 15px;
+      background: #efefef;
+      overflow: scroll;
+    }
+
+    .about-area.active,
+    .css-area.active {
+      display: block;
+      position: absolute;
+      top: 20vh;
+      left: 20vw;
+      right: 20vw;
+      bottom: 20vh;
+    }
+
+    .css-area.active pre {
+      display: block;
+      overflow: hidden;
+      padding: 0;
+    }
+  </style>
+
+  <style id="theme"></style>
+</head>
+
+<body>
+  <div class="color-controls"></div>
+
+  <div class="color-grid"></div>
+
+  <div class="about-area">
+    <button class="css-close" onclick="toggleAbout()">X</button>
+    <p>8-10 shades of grey:<br />
+      for example:
+      #21252a, #343a40, #495057, #868e96, #adb5bd, #cfd4da, #dee2e6, #eaedef, #f1f3f5, #f8f9fa
+    </p>
+    <p>1, maybe 2 main colors (5-10 shades of each):<br />
+      example blue:
+      #12283a, #1a4971, #2368a2, #3183c8 (primary), #63a2d8, #aad4f5, #eff8ff
+    </p>
+    <p>2-3 accent colors as well (5-7 shades of this as well):<br />
+      example teal:
+      #114443, #1b655e, #2a9187, #3caea3 (primary), #6ed7d3, #a8eeeb, #e7fffe<br />
+      example red:
+      #5f1717, #881a1b, #b82020, #dc3030 (primary), #e36363, #f4aaaa, #fce8e8<br />
+      example yellow:
+      #5c4813, #8c6d1f, #caa53d, #f4ca64 (primary), #fae29f, #fdf3d7, #fffcf4<br />
+      example green:
+      #155239, #187741, #249d57, #38c172 (primary), #74d99f, #a8eec1, #e3fcec
+    </p>
+    <p>Start by picking a base color for the scale you want to create — the color in the middle that your lighter and
+      darker shades are based on. There's no real scientific way to do this, but for primary and accent colors, a good
+      rule of thumb is to pick a shade that would work well as a button background.</p>
+  </div>
+
+  <div class="css-area">
+    <button class="css-close" onclick="toggleCSS()">X</button>
+    <pre class="css-area"></pre>
+  </div>
+
+  <div class="buttons-wrap">
+    <button class="about-toggle" onclick="toggleAbout()">About</button>
+    <button class="show-css" onclick="toggleCSS()">Show CSS</button>
+  </div>
+
+  <script>
+    const DEFAULT_COLOR_SCHEME = [{
+        name: 'primary',
+        hex: '#20639b',
+        lMin: 15,
+        lMax: 90
+      },
+      {
+        name: 'secondary',
+        hex: '#3c8ea3',
+        lMin: 15,
+        lMax: 90
+      },
+      {
+        name: 'warning',
+        hex: '#f6d55c',
+        lMin: 15,
+        lMax: 90
+      },
+      {
+        name: 'error',
+        hex: '#ed553b',
+        lMin: 15,
+        lMax: 90
+      },
+      {
+        name: 'positive',
+        hex: '#38c172',
+        lMin: 15,
+        lMax: 90
+      },
+      {
+        name: 'grey',
+        hex: '#788b9b',
+        lMin: 15,
+        lMax: 100
+      },
+    ];
+    const colorScheme = DEFAULT_COLOR_SCHEME.map((colorType) => ({ ...colorType
+    }));
+    const style = document.querySelector('#theme');
+    const colorControls = document.querySelector('.color-controls');
+    const grid = document.querySelector('.color-grid');
+    const cssArea = document.querySelector('.css-area pre');
+    createColorControls();
+    createGrid();
+    createStyles();
+
+    function changeColor(index, hex) {
+      Object.assign(colorScheme[index], {
+        hex
+      });
+      createStyles();
+    }
+
+    function changeMinLightness(index, lMin) {
+      Object.assign(colorScheme[index], {
+        lMin
+      });
+      createStyles();
+    }
+
+    function changeMaxLightness(index, lMax) {
+      Object.assign(colorScheme[index], {
+        lMax
+      });
+      createStyles();
+    }
+
+    function createStyles() {
+      [style, cssArea].forEach((element) => {
+        element.innerHTML = colorScheme
+          .map(({
+            name,
+            hex,
+            lMin,
+            lMax
+          }) => ({
+            name,
+            ...hexToHsl(hex),
+            lMin,
+            lMax
+          }))
+          .map(({
+              name,
+              h,
+              s,
+              l,
+              lMin,
+              lMax
+            }) => [
+              ...[0, 1, 2, 3].map((i) => lMin + (i * (l - lMin) / 4)),
+              l,
+              ...[1, 2, 3, 4].map((i) => l + (i * (lMax - l) / 4)),
+            ]
+            .map((l, i) => `.${name.toLowerCase()}${100 * (i + 1)}{background: hsl(${h},${s}%,${l}%);}`)
+            .join('\n'))
+          .join('\n');
+      });
+    }
+
+    function createColorControls() {
+      colorControls.innerHTML = colorScheme.map(({
+            name,
+            hex,
+            lMin,
+            lMax
+          }, i) =>
+          `
+                    <div>
+                        <label>
+                            ${name[0].toUpperCase()}${name.slice(1)}
+                            <input type="color" value="${hex}" onchange="changeColor(${i}, this.value);">
+                        </label>
+                        <label>
+                            Min lightness
+                            <input type="range" value="${lMin}" oninput="changeMinLightness(${i}, parseInt(this.value, 10));">
+                        </label>
+                        <label>
+                            Max lightness
+                            <input type="range" value="${lMax}" oninput="changeMaxLightness(${i}, parseInt(this.value, 10));">
+                        </label>
+                    </div>
+                `
+        )
+        .join('\n');
+    }
+
+    function createGrid() {
+      colorScheme.forEach(({
+        name
+      }) => {
+        for (let shade = 100; shade <= 900; shade += 100) {
+          const colorBox = document.createElement('div');
+          colorBox.setAttribute('class', `${name}${shade}`);
+          grid.appendChild(colorBox);
+        }
+      });
+    }
+
+    function hexToHsl(hex) {
+      const [, r, g, b] = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex).map((x) => parseInt(x, 16) / 255);
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const l = (max + min) / 2;
+      if (max === min) {
+        return {
+          h: 0,
+          s: 0,
+          l: Math.round(100 * l),
+        };
+      } else {
+        let h = (
+          r === max ?
+          ((g - b) / (max - min)) + (g < b ? 6 : 0) :
+          g === max ?
+          ((b - r) / (max - min)) + 2 :
+          ((r - g) / (max - min)) + 4
+        ) / 6;
+        let s = l > 0.5 ?
+          (max - min) / (2 - (max + min)) :
+          (max - min) / (max + min);
+        return {
+          h: Math.round(360 * h),
+          s: Math.round(100 * s),
+          l: Math.round(100 * l),
+        };
+      }
+    }
+
+    function toggleCSS() {
+      document.querySelector('.about-area').className = 'about-area';
+      document.querySelector('.css-area').className = (document.querySelector('.css-area').className === 'css-area') ?
+        'css-area active' : 'css-area';
+    }
+
+    function toggleAbout() {
+      document.querySelector('.css-area').className = 'css-area';
+      document.querySelector('.about-area').className = (document.querySelector('.about-area').className ===
+          'about-area') ?
+        'about-area active' : 'about-area';
+    }
+  </script>
+</body>
+
+</html>
